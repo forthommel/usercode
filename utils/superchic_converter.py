@@ -33,8 +33,8 @@ def main():
         elif '</event>' in l:
             in_event = False
             block += l
-            block = convert(block, ini_info)
-            write_conversion(out, block)
+            block = convert_event_block(block, ini_info)
+            out.write(block)
             block = ''
         elif in_init:
             l = l.split()
@@ -57,8 +57,9 @@ def main():
             in_init = False
 
 
-def convert(block, ini_info):
+def convert_event_block(block, ini_info):
     out = ''
+    npart = 0
     for l in block.split('\n'):
         l = l.split()
         if len(l)==0: continue
@@ -71,24 +72,27 @@ def convert(block, ini_info):
             part1_ene = sqrt(float(ini_info['in1_pz'])**2+float(part1_mass)**2)
             part2_ene = sqrt(float(ini_info['in2_pz'])**2+float(part2_mass)**2)
             out += '\t'.join([
-                    ini_info['in1_pdg'], '-1', '-1', '0', '0', '0',
+                    ini_info['in1_pdg'], '-1', '0', '0', '0', '0',
                     '0.000000000E+00', '0.000000000E+00', ini_info['in1_pz'],
                     '%.9E' % (part1_ene), part1_mass,
                     '0.', '9.'])+'\n'
             out += '\t'.join([
-                    ini_info['in2_pdg'], '-1', '-1', '0', '0', '0',
+                    ini_info['in2_pdg'], '-1', '0', '0', '0', '0',
                     '0.000000000E+00', '0.000000000E+00', '-'+ini_info['in2_pz'],
                     '%.9E' % (part2_ene), part2_mass,
                     '0.', '9.'])+'\n'
+        elif len(l)>2:
+            if npart==0: #first outgoing proton
+                l[2] = '1'
+            elif npart==1: #second outgoing proton
+                l[2] = '2'
+            else:
+                l[2] = str(int(l[2])+2)
+            out += '\t'.join(l)+'\n'
+            npart += 1
         else:
             out += '\t'.join(l)+'\n'
     return out
-
-def write_conversion(out, block):
-    out.write(block)
-    #print 'New block'
-    #out.write(block)
-    #print block
 
 if __name__=='__main__':
     main()
